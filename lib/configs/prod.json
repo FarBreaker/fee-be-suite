@@ -1,0 +1,33 @@
+{
+	"prefix": "prod-symphony",
+	"env": {
+		"region": "eu-central-1",
+		"stage": "prod"
+	},
+	"compute": {
+		"lambda": {
+			"profile": "performance",
+			"timeout": 30
+		}
+	},
+	"persistance": {
+		"table": {
+			"name": "prod-symphony-table",
+			"removalPolicy": "retain"
+		},
+		"bucket": {
+			"name": "prod-symphony-bucket",
+			"removalPolicy": "retain",
+			"autoDeleteObjects": false
+		}
+	},
+	"network": {
+		"apigw": {
+			"corsPreflight": {
+				"allowMethods": ["GET", "POST"],
+				"allowOrigins": ["*"],
+				"allowHeaders": ["*"]
+			}
+		}
+	}
+}

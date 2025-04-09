@@ -1,0 +1,9 @@
+{
+  "dev-symphony-stateful": {
+    "TableName": "dev-symphony-table",
+    "BucketName": "dev-symphony-bucket"
+  },
+  "dev-symphony-stateless": {
+    "devsymphonygatewayHttpApiGateway1A110DC3": "https://johwx4mg66.execute-api.eu-central-1.amazonaws.com"
+  }
+}

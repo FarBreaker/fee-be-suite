@@ -1,0 +1,33 @@
+{
+	"prefix": "dev-symphony",
+	"env": {
+		"region": "eu-central-1",
+		"stage": "dev"
+	},
+	"compute": {
+		"lambda": {
+			"profile": "performance",
+			"timeout": 30
+		}
+	},
+	"persistance": {
+		"table": {
+			"name": "dev-symphony-table",
+			"removalPolicy": "destroy"
+		},
+		"bucket": {
+			"name": "dev-symphony-bucket",
+			"removalPolicy": "destroy",
+			"autoDeleteObjects": true
+		}
+	},
+	"network": {
+		"apigw": {
+			"corsPreflight": {
+				"allowMethods": ["GET", "POST"],
+				"allowOrigins": ["*"],
+				"allowHeaders": ["*"]
+			}
+		}
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"entryPoints": ["./stateless/functions/test/index.ts"],
+	"out": "./docs/documentation",
+	"theme": "default",
+	"name": "Symphony",
+	"includeVersion": true,
+	"lightHighlightTheme": "light-plus",
+	"hideGenerator": true,
+	"exclude": ["**/*+(index|.test|.spec|.e2e).ts"],
+	"readme": "./docs/DOCS.md",
+	"disableSources": true,
+	"excludePrivate": true,
+	"excludeProtected": true
+}
