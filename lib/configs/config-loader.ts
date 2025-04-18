@@ -3,11 +3,11 @@
 /**
  * Import required dependencies for Lambda configuration
  */
-import { RemovalPolicy } from "aws-cdk-lib";
-import { LambdaProfile } from "../constructs/NodeFunction/index";
+import type { RemovalPolicy } from "aws-cdk-lib";
+import type { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import type { LambdaProfile } from "../constructs/NodeFunction/index";
 import dev from "./dev.json" assert { type: "json" };
 import prod from "./prod.json" assert { type: "json" };
-import { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 
 /**
  * Environment configuration interface for account and region
@@ -67,7 +67,7 @@ interface PersistanceEnv {
  */
 interface TableEnv {
 	/** Table name */
-	name: string;
+	tableName: string;
 	removalPolicy: RemovalPolicy;
 }
 
@@ -76,7 +76,7 @@ interface TableEnv {
  */
 interface BucketEnv {
 	/** Bucket name */
-	name: string;
+	bucketName: string;
 	removalPolicy: RemovalPolicy;
 	autoDeleteObjects: boolean;
 }

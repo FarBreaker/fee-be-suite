@@ -1,11 +1,11 @@
 /** @format */
 
-import { Construct } from "constructs";
-import { EnvironmentConfig } from "../lib/configs/config-loader";
 import { CfnOutput, RemovalPolicy, Stack } from "aws-cdk-lib";
 import { AttributeType, TableV2 } from "aws-cdk-lib/aws-dynamodb";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import { NagSuppressions } from "cdk-nag";
+import type { Construct } from "constructs";
+import type { EnvironmentConfig } from "../lib/configs/config-loader";
 
 export class StatefulStack extends Stack {
 	public Table: TableV2;
@@ -14,30 +14,28 @@ export class StatefulStack extends Stack {
 		super(scope, id, props);
 
 		const { persistance, compute } = props;
+		const { bucket, table } = persistance;
 
 		this.Bucket = new Bucket(this, `${props?.prefix}-bucket`, {
 			enforceSSL: true,
-			bucketName: persistance.bucket.name,
-			removalPolicy: persistance.bucket.removalPolicy,
-			autoDeleteObjects: persistance.bucket.autoDeleteObjects,
+			...bucket,
 		});
 
 		this.Table = new TableV2(this, `${props?.prefix}-dynamo`, {
-			tableName: persistance.table.name,
 			partitionKey: { name: "pk", type: AttributeType.STRING },
 			sortKey: { name: "sk", type: AttributeType.STRING },
-			removalPolicy: persistance.table.removalPolicy,
+			...table,
 		});
 
 		new CfnOutput(this, "TableName", {
 			value: this.Table.tableName,
 			description: "The name of the dynamo table",
-			exportName: `TableName-${props?.prefix}`,
+			exportName: `TableName-${props?.env.stage}`,
 		});
 		new CfnOutput(this, "BucketName", {
 			value: this.Bucket.bucketName,
 			description: "The name of the bucket",
-			exportName: `BucketName-${props?.prefix}`,
+			exportName: `BucketName-${props?.env.stage}`,
 		});
 	}
 }

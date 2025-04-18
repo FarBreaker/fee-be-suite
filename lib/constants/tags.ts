@@ -7,7 +7,7 @@ export interface TagsConfig {
 export const getTags = (environment: string): TagsConfig => {
 	const commonTags: TagsConfig = {
 		ManagedBy: "CDK",
-		Project: "Symphony",
+		Project: "FEE_SUITE",
 		LastUpdated: new Date().toISOString(),
 		awsApplication:
 			"arn:aws:resource-groups:eu-central-1:000468819253:group/symphony/091vqyc8ad0r5w366wwox66ahx",
@@ -33,6 +33,6 @@ export const getTags = (environment: string): TagsConfig => {
 
 	return {
 		...commonTags,
-		...(environmentTags[environment] || environmentTags["dev"]),
+		...(environmentTags[environment] || environmentTags.dev),
 	};
 };

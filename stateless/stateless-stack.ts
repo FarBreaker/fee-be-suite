@@ -1,15 +1,17 @@
 /** @format */
 
-import { Construct } from "constructs";
-import { EnvironmentConfig } from "../lib/configs/config-loader";
 import { Duration, Stack } from "aws-cdk-lib";
-import { EnhancedLambda, LambdaProfile } from "../lib/constructs/NodeFunction";
-import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
-import { Gateway } from "../lib/constructs/Gateway";
 import { HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { type ITableV2, TableV2 } from "aws-cdk-lib/aws-dynamodb";
+import { Bucket, type IBucket } from "aws-cdk-lib/aws-s3";
+import type { Construct } from "constructs";
+import type { EnvironmentConfig } from "../lib/configs/config-loader";
+import { Gateway } from "../lib/constructs/Gateway";
+import { EnhancedLambda, LambdaProfile } from "../lib/constructs/NodeFunction";
 
 export class StatelessStack extends Stack {
 	private bucket: IBucket;
+	private table: ITableV2;
 	constructor(scope: Construct, id: string, props: EnvironmentConfig) {
 		super(scope, id, props);
 
@@ -18,37 +20,43 @@ export class StatelessStack extends Stack {
 		this.bucket = Bucket.fromBucketName(
 			this,
 			`${props.prefix}-reboundBucket`,
-			persistance.bucket.name
+			persistance.bucket.bucketName,
+		);
+		this.table = TableV2.fromTableName(
+			this,
+			`${props.prefix}-reboundTable`,
+			persistance.table.tableName,
 		);
 
-		const lambdaTestLLRT = new EnhancedLambda(
+		const CreateEventFunction = new EnhancedLambda(
 			this,
-			`${props?.prefix}-llrt-lambda`,
+			`${props?.prefix}-createEvent`,
 			{
-				lambdaDefinition: "llrt-lambda",
-				entry: "./stateless/functions/test/index.ts",
+				lambdaDefinition: "create-event-function",
+				entry: "./stateless/functions/createEvent.ts",
 				profile: compute.lambda.profile,
 				timeout: Duration.minutes(3),
 				httpIntegration: true,
 				environment: {
-					BUCKET_NAME: this.bucket.bucketName,
+					TABLE_NAME: this.table.tableName,
 				},
-				handler: "index.testFunction",
-			}
+				handler: "handler",
+			},
 		);
-		const lambdaTestNODE = new EnhancedLambda(
+		const GetEventListFunction = new EnhancedLambda(
 			this,
-			`${props?.prefix}-node-lambda`,
+			`${props?.prefix}-getEventList`,
 			{
-				lambdaDefinition: "node-lambda",
-				entry: "./stateless/functions/test/index.ts",
-				profile: LambdaProfile.COMPATIBILITY,
+				lambdaDefinition: "get-event-list-function",
+				entry: "./stateless/functions/getEventList.ts",
+				profile: compute.lambda.profile,
 				timeout: Duration.minutes(3),
+				httpIntegration: true,
 				environment: {
-					BUCKET_NAME: this.bucket.bucketName,
+					TABLE_NAME: this.table.tableName,
 				},
-				handler: "index.testFunction",
-			}
+				handler: "handler",
+			},
 		);
 
 		const httpEndpoint = new Gateway(this, `${props.prefix}-gateway`, {
@@ -58,16 +66,20 @@ export class StatelessStack extends Stack {
 					apiVersion: "v1",
 					routes: [
 						{
+							methods: [HttpMethod.POST],
+							path: "/createEvent/{eventType}",
+							integration: CreateEventFunction.integration,
+						},
+						{
 							methods: [HttpMethod.GET],
-							path: "/demo",
-							integration: lambdaTestLLRT.integration,
+							path: "/getEventList/{eventType}",
+							integration: GetEventListFunction.integration,
 						},
 					],
 				},
 			],
 		});
-
-		this.bucket.grantReadWrite(lambdaTestLLRT.function);
-		this.bucket.grantReadWrite(lambdaTestNODE.function);
+		this.table.grantWriteData(CreateEventFunction.function);
+		this.table.grantReadData(GetEventListFunction.function);
 	}
 }

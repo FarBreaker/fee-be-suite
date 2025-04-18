@@ -12,11 +12,11 @@
 	},
 	"persistance": {
 		"table": {
-			"name": "prod-symphony-table",
+			"tableName": "prod-symphony-table",
 			"removalPolicy": "retain"
 		},
 		"bucket": {
-			"name": "prod-symphony-bucket",
+			"bucketName": "prod-symphony-bucket",
 			"removalPolicy": "retain",
 			"autoDeleteObjects": false
 		}

@@ -1,5 +1,5 @@
 {
-	"prefix": "dev-symphony",
+	"prefix": "fee-suite",
 	"env": {
 		"region": "eu-central-1",
 		"stage": "dev"
@@ -7,16 +7,17 @@
 	"compute": {
 		"lambda": {
 			"profile": "performance",
-			"timeout": 30
+			"timeout": 30,
+			"memory": 1024
 		}
 	},
 	"persistance": {
 		"table": {
-			"name": "dev-symphony-table",
+			"tableName": "fee-suite-table-dev",
 			"removalPolicy": "destroy"
 		},
 		"bucket": {
-			"name": "dev-symphony-bucket",
+			"bucketName": "fee-suite-bucket-dev",
 			"removalPolicy": "destroy",
 			"autoDeleteObjects": true
 		}
