@@ -10,7 +10,7 @@ export const getTags = (environment: string): TagsConfig => {
 		Project: "FEE_SUITE",
 		LastUpdated: new Date().toISOString(),
 		awsApplication:
-			"arn:aws:resource-groups:eu-central-1:000468819253:group/symphony/091vqyc8ad0r5w366wwox66ahx",
+			"arn:aws:resource-groups:eu-central-1:000468819253:group/fee-suite/01o2gty3uabg42ao3jsnhrcu5m",
 	};
 
 	const environmentTags: Record<string, TagsConfig> = {

@@ -1,15 +1,15 @@
 /** @format */
 
-import { IFunction, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
-import { Construct } from "constructs";
-import { CfnResource, Duration } from "aws-cdk-lib";
+import type { CfnResource, Duration } from "aws-cdk-lib";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { type IFunction, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
 import { Architecture } from "aws-cdk-lib/aws-lambda";
 import {
 	NodejsFunction,
-	NodejsFunctionProps,
+	type NodejsFunctionProps,
 	OutputFormat,
 } from "aws-cdk-lib/aws-lambda-nodejs";
-import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { Construct } from "constructs";
 
 /**
  * Enum representing the Lambda function profile type
@@ -17,7 +17,7 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
  * @property {string} PERFORMANCE - Profile optimized for performance using LLRT runtime
  * @property {string} COMPATIBILITY - Profile using standard Node.js runtime for compatibility
  */
-export const enum LambdaProfile {
+export enum LambdaProfile {
 	PERFORMANCE = "performance",
 	COMPATIBILITY = "compatibility",
 }
@@ -92,7 +92,7 @@ export class EnhancedLambda extends Construct {
 				{
 					...props,
 					functionName: `${props.lambdaDefinition}-${props.profile}`,
-				}
+				},
 			);
 		} else {
 			this.function = new NodejsFunction(
@@ -102,13 +102,13 @@ export class EnhancedLambda extends Construct {
 					...props,
 					...fixedProps,
 					runtime: Runtime.NODEJS_20_X,
-				}
+				},
 			);
 		}
 		if (props.httpIntegration) {
 			this.integration = new HttpLambdaIntegration(
 				`${props.lambdaDefinition}-integration`,
-				this.function
+				this.function,
 			);
 		}
 	}
@@ -126,9 +126,9 @@ export interface LlrtFunctionProps extends NodejsFunctionProps {
 export class LLRTNodeFunction extends NodejsFunction {
 	constructor(scope: Construct, id: string, props: LlrtFunctionProps) {
 		const version = props.llrtVersion ?? "latest";
-		const arch = props.architecture == Architecture.ARM_64 ? "arm64" : "x64";
+		const arch = props.architecture === Architecture.ARM_64 ? "arm64" : "x64";
 		const binaryUrl =
-			version == "latest"
+			version === "latest"
 				? `https://github.com/awslabs/llrt/releases/latest/download/llrt-lambda-${arch}.zip`
 				: `https://github.com/awslabs/llrt/releases/download/${version}/llrt-lambda-${arch}.zip`;
 		super(scope, id, {
@@ -188,7 +188,7 @@ export class LLRTNodeFunction extends NodejsFunction {
 
 		(this.node.defaultChild as CfnResource).addPropertyOverride(
 			"Runtime",
-			"provided.al2023"
+			"provided.al2023",
 		);
 	}
 }

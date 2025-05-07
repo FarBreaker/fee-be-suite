@@ -19,10 +19,13 @@ export const handler = async (
 				TableName,
 				ExpressionAttributeNames: {
 					"#eventType": "pk",
+					"#eventId": "sk",
 				},
-				KeyConditionExpression: "#eventType = :eventType",
+				KeyConditionExpression:
+					"#eventType = :eventType AND begins_with(#eventId, :eventId) ",
 				ExpressionAttributeValues: {
 					":eventType": event.pathParameters?.eventType,
+					":eventId": event.pathParameters?.eventId,
 				},
 			}),
 		);

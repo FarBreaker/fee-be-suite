@@ -14,3 +14,6 @@ export interface CreateReventInput extends CreateEventInput {
 	date: string;
 	where: string;
 }
+export interface DeleteEventInput {
+	sk: string;
+}

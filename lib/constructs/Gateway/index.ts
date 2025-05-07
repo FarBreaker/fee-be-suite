@@ -3,9 +3,10 @@
 import { CfnOutput } from "aws-cdk-lib";
 import {
 	HttpApi,
-	HttpApiProps,
-	HttpMethod,
-	HttpRouteIntegration,
+	type HttpApiProps,
+	type HttpMethod,
+	type HttpRouteIntegration,
+	type IHttpRouteAuthorizer,
 } from "aws-cdk-lib/aws-apigatewayv2";
 import { Construct } from "constructs";
 
@@ -40,6 +41,8 @@ type Route = {
 	draft?: boolean;
 	/** Integration that handles the route's requests */
 	integration: HttpRouteIntegration;
+	/** Authorized to provide to the route*/
+	authorizer?: IHttpRouteAuthorizer;
 };
 
 /**
@@ -61,8 +64,8 @@ export class Gateway extends Construct {
 		this.api = new HttpApi(this, `${id}`, { ...props });
 
 		if (props.routeGroups.length > 0) {
-			for (let routeGroup of props.routeGroups) {
-				for (let route of routeGroup.routes) {
+			for (const routeGroup of props.routeGroups) {
+				for (const route of routeGroup.routes) {
 					if (!route.draft)
 						this.api.addRoutes({
 							path: `/${
@@ -70,6 +73,7 @@ export class Gateway extends Construct {
 							}${route.path}`,
 							methods: route.methods,
 							integration: route.integration,
+							authorizer: route.authorizer,
 						});
 				}
 			}

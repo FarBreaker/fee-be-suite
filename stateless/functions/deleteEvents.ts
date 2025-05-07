@@ -1,8 +1,9 @@
 /** @format */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { DeleteEventInput } from "./functionTypes";
 
 const TableName = process.env.TABLE_NAME;
 const ddbDocClient = DynamoDBDocumentClient.from(
@@ -14,22 +15,34 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
 	console.log("Event: ", event);
 	try {
-		const qRes = await ddbDocClient.send(
-			new QueryCommand({
+		let input: DeleteEventInput;
+		try {
+			input = JSON.parse(event.body ?? "");
+		} catch (error) {
+			console.error("Error parsing JSON: ", error);
+			return {
+				statusCode: 400,
+				body: JSON.stringify({ status: "Error", message: "Invalid JSON" }),
+			};
+		}
+
+		const Item = {
+			pk: event.pathParameters?.eventType,
+			sk: input.sk,
+		};
+
+		await ddbDocClient.send(
+			new DeleteCommand({
 				TableName,
-				ExpressionAttributeNames: {
-					"#eventType": "pk",
-				},
-				KeyConditionExpression: "#eventType = :eventType",
-				ExpressionAttributeValues: {
-					":eventType": event.pathParameters?.eventType,
-				},
+				Key: Item,
 			}),
 		);
 
 		return {
 			statusCode: 200,
-			body: JSON.stringify(qRes.Items),
+			body: JSON.stringify({
+				status: "OK",
+			}),
 		};
 	} catch (error) {
 		console.error("Error: ", error);

@@ -4,6 +4,6 @@
     "BucketName": "fee-suite-bucket-dev"
   },
   "fee-suite-stateless-dev": {
-    "feesuitegatewayHttpApiGateway79B4B23A": "https://6elu3wtx3k.execute-api.eu-central-1.amazonaws.com"
+    "feesuitegatewaydevHttpApiGateway28FC07B2": "https://qyhlhfofoi.execute-api.eu-central-1.amazonaws.com"
   }
 }

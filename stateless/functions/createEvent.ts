@@ -26,13 +26,11 @@ export const handler = async (
 			};
 		}
 
-		const currentDate = new Date().toISOString().split("T")[0];
 		const Item = {
 			pk: event.pathParameters?.eventType,
-			sk: `${input.slug}#${currentDate}`,
+			sk: `${input.slug}#${input.creationDate}`,
 			eventType: event.pathParameters?.eventType,
 			...input,
-			creationDate: currentDate,
 		};
 
 		await ddbDocClient.send(
