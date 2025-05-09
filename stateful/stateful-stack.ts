@@ -2,8 +2,16 @@
 
 import { CfnOutput, RemovalPolicy, Stack } from "aws-cdk-lib";
 
+import {
+	CloudFrontWebDistribution,
+	Distribution,
+	OriginAccessControlBase,
+	OriginAccessIdentity,
+	OriginBase,
+} from "aws-cdk-lib/aws-cloudfront";
+import { S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 import { AttributeType, TableV2 } from "aws-cdk-lib/aws-dynamodb";
-import { Bucket } from "aws-cdk-lib/aws-s3";
+import { Bucket, type CorsRule, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { NagSuppressions } from "cdk-nag";
 import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "../lib/configs/config-loader";
@@ -17,12 +25,35 @@ export class StatefulStack extends Stack {
 		const { persistance, compute } = props;
 		const { bucket, table } = persistance;
 
+		const assetsBucketCors: CorsRule = {
+			allowedOrigins: ["*"],
+			allowedMethods: [HttpMethods.GET],
+			allowedHeaders: ["*"],
+		};
+
 		this.Bucket = new Bucket(
 			this,
 			`${props?.prefix}-bucket-${props.env.stage}`,
 			{
 				enforceSSL: true,
+				cors: [assetsBucketCors],
 				...bucket,
+			},
+		);
+		const originAccessIdentity = new OriginAccessIdentity(
+			this,
+			`${props.prefix}-oai-${props.env.stage}`,
+		);
+
+		const assetDist = new Distribution(
+			this,
+			`${props.prefix}-assetDist-${props.env.stage}`,
+			{
+				defaultBehavior: {
+					origin: S3BucketOrigin.withOriginAccessIdentity(this.Bucket, {
+						originAccessIdentity,
+					}),
+				},
 			},
 		);
 

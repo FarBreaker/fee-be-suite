@@ -92,6 +92,22 @@ export class StatelessStack extends Stack {
 				handler: "handler",
 			},
 		);
+		const PutS3ObjectFunction = new EnhancedLambda(
+			this,
+			`${props?.prefix}-putS3Object-${props.env.stage}`,
+			{
+				lambdaDefinition: `${props?.prefix}-putS3Object-${props.env.stage}`,
+				entry: "./stateless/functions/putS3Object.ts",
+				profile: LambdaProfile.COMPATIBILITY,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					BUCKET_NAME: this.bucket.bucketName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
 		const httpEndpoint = new Gateway(
 			this,
 			`${props.prefix}-gateway-${props.env.stage}`,
@@ -121,6 +137,11 @@ export class StatelessStack extends Stack {
 								path: "/getEventDetails/{eventType}/{eventId}",
 								integration: GetEventDetailsFunction.integration,
 							},
+							{
+								methods: [HttpMethod.PUT],
+								path: "/uploadFile",
+								integration: PutS3ObjectFunction.integration,
+							},
 						],
 					},
 				],
@@ -130,5 +151,6 @@ export class StatelessStack extends Stack {
 		this.table.grantWriteData(DeleteEventFunction.function);
 		this.table.grantReadData(GetEventListFunction.function);
 		this.table.grantReadData(GetEventDetailsFunction.function);
+		this.bucket.grantWrite(PutS3ObjectFunction.function);
 	}
 }
