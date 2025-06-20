@@ -3,7 +3,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import type { CreateFADInput, CreateReventInput } from "./functionTypes";
+import type { CreateEventDTO } from "./functionTypes";
 
 const TableName = process.env.TABLE_NAME;
 const ddbDocClient = DynamoDBDocumentClient.from(
@@ -15,7 +15,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
 	console.log("Event: ", event);
 	try {
-		let input: CreateFADInput | CreateReventInput;
+		let input: CreateEventDTO;
 		try {
 			input = JSON.parse(event.body ?? "");
 		} catch (error) {
@@ -27,10 +27,10 @@ export const handler = async (
 		}
 
 		const Item = {
+			...input,
 			pk: event.pathParameters?.eventType,
 			sk: `${input.slug}#${input.creationDate}`,
 			eventType: event.pathParameters?.eventType,
-			...input,
 		};
 
 		await ddbDocClient.send(

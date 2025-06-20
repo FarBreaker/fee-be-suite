@@ -8,7 +8,7 @@ export const getTags = (environment: string): TagsConfig => {
 	const commonTags: TagsConfig = {
 		ManagedBy: "CDK",
 		Project: "FEE_SUITE",
-		LastUpdated: new Date().toISOString(),
+		// LastUpdated: new Date().toISOString(),
 		awsApplication:
 			"arn:aws:resource-groups:eu-central-1:000468819253:group/fee-suite/01o2gty3uabg42ao3jsnhrcu5m",
 	};

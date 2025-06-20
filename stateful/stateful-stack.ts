@@ -37,9 +37,16 @@ export class StatefulStack extends Stack {
 			{
 				enforceSSL: true,
 				cors: [assetsBucketCors],
+
 				...bucket,
 			},
 		);
+		const updaterBucket = new Bucket(this, "UpdaterBucket", {
+			enforceSSL: true,
+			cors: [assetsBucketCors],
+			...bucket,
+			bucketName: `appassets${props.env.stage}`,
+		});
 		const originAccessIdentity = new OriginAccessIdentity(
 			this,
 			`${props.prefix}-oai-${props.env.stage}`,
@@ -53,6 +60,13 @@ export class StatefulStack extends Stack {
 					origin: S3BucketOrigin.withOriginAccessIdentity(this.Bucket, {
 						originAccessIdentity,
 					}),
+				},
+				additionalBehaviors: {
+					"/updater/*": {
+						origin: S3BucketOrigin.withOriginAccessIdentity(updaterBucket, {
+							originAccessIdentity,
+						}),
+					},
 				},
 			},
 		);

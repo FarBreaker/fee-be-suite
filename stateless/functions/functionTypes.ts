@@ -1,19 +1,38 @@
-export interface CreateEventInput {
+export interface CreateEventDTO {
 	title: string;
-	creationDate: string;
+	description: string;
 	slug: string;
-	scheduleUrl: string;
-	creditsInfo: string;
-}
-export interface CreateFADInput extends CreateEventInput {
 	from: string;
+	assetUrl: string;
 	to: string;
-	trainingUrl: string;
+	location: string;
+	trainingUrl?: string;
+	creationDate: string;
+	eventType: string;
+	creditNumber: number;
+	eventSchedule: EventScheduleItem[];
+	referees: EventReferee[];
+	extraInfo?: EventExtraItem;
 }
-export interface CreateReventInput extends CreateEventInput {
-	date: string;
-	where: string;
+export interface EventScheduleItem {
+	time: string;
+	title: string;
 }
+export interface FileUploadResponse {
+	status: string;
+	url: string;
+}
+export interface EventExtraItem {
+	roomReservation?: boolean;
+	airTransfer?: boolean;
+	dinnerConfirmation?: boolean;
+}
+export interface EventReferee {
+	title: string;
+	fullName: string;
+	linkedinUrl?: string;
+}
+
 export interface DeleteEventInput {
 	sk: string;
 }

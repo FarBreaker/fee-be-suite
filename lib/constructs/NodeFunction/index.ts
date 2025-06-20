@@ -73,14 +73,16 @@ export class EnhancedLambda extends Construct {
 			memorySize: 1024,
 			functionName: `${props.lambdaDefinition}-${props.profile}`,
 			bundling: {
+				minify: true,
+				sourceMap: true,
+				target: "ES2022",
+				preCompilation: true,
 				banner:
 					"import { createRequire } from 'module';const require = createRequire(import.meta.url);",
-				minify: true,
 				format: OutputFormat.ESM,
 				esbuildArgs: {
 					"--tree-shaking": true,
 				},
-				sourceMap: true,
 				externalModules: ["@aws-sdk/*"],
 			},
 		};
@@ -101,7 +103,7 @@ export class EnhancedLambda extends Construct {
 				{
 					...props,
 					...fixedProps,
-					runtime: Runtime.NODEJS_20_X,
+					runtime: Runtime.NODEJS_22_X,
 				},
 			);
 		}
@@ -133,6 +135,7 @@ export class LLRTNodeFunction extends NodejsFunction {
 				: `https://github.com/awslabs/llrt/releases/download/${version}/llrt-lambda-${arch}.zip`;
 		super(scope, id, {
 			...props,
+			runtime: Runtime.NODEJS_22_X,
 			memorySize: 1024,
 			bundling: {
 				esbuildArgs: {
@@ -140,20 +143,21 @@ export class LLRTNodeFunction extends NodejsFunction {
 				},
 				banner:
 					"import { createRequire } from 'module';const require = createRequire(import.meta.url);",
-				target: "es2020",
+				target: "es2022",
 				format: OutputFormat.ESM,
 				minify: true,
+
 				commandHooks: {
 					beforeBundling: (_i, _o) => [],
 					afterBundling: (i, o) => [
 						// Download llrt binary from GitHub release and cache it
 						`if [ ! -e ${i}/.tmp/${arch}/bootstrap ]; then
-            mkdir -p ${i}/.tmp/${arch}
-            cd ${i}/.tmp/${arch}
-            curl -L -o llrt_temp.zip ${binaryUrl}
-            unzip llrt_temp.zip
-            rm -rf llrt_temp.zip
-            fi`,
+           				mkdir -p ${i}/.tmp/${arch}
+            			cd ${i}/.tmp/${arch}
+            			curl -L -o llrt_temp.zip ${binaryUrl}
+            			unzip llrt_temp.zip
+            			rm -rf llrt_temp.zip
+            			fi`,
 						`cp ${i}/.tmp/${arch}/bootstrap ${o}/`,
 					],
 					beforeInstall: (_i, _o) => [],
