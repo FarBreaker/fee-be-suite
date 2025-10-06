@@ -2,12 +2,8 @@
 
 import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import { HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import {
-	HttpLambdaAuthorizer,
-	HttpUserPoolAuthorizer,
-} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
-import {
-	type IUserPool,
 	ManagedLoginVersion,
 	OAuthScope,
 	ProviderAttribute,
@@ -18,12 +14,8 @@ import {
 	UserPoolIdentityProviderSaml,
 	UserPoolIdentityProviderSamlMetadata,
 } from "aws-cdk-lib/aws-cognito";
-import {
-	IdentityPool,
-	UserPoolAuthenticationProvider,
-} from "aws-cdk-lib/aws-cognito-identitypool";
+
 import { type ITableV2, TableV2 } from "aws-cdk-lib/aws-dynamodb";
-import { FederatedPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { Bucket, type IBucket } from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "../lib/configs/config-loader";
@@ -139,6 +131,55 @@ export class StatelessStack extends Stack {
 			},
 			handler: "handler",
 		});
+		const EventRegistrationFunction = new EnhancedLambda(
+			this,
+			"eventRegistration",
+			{
+				lambdaDefinition: "eventRegistration",
+				entry: "./stateless/functions/eventRegistration.ts",
+				profile: LambdaProfile.COMPATIBILITY,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					BUCKET_NAME: this.bucket.bucketName,
+					REGION: props.env.region ?? "eu-central-1",
+					TABLE_NAME: this.table.tableName,
+				},
+				handler: "handler",
+			},
+		);
+		const GetEventParticipantsFunction = new EnhancedLambda(
+			this,
+			"getEventParticipants",
+			{
+				lambdaDefinition: "getEventParticipants",
+				entry: "./stateless/functions/getEventParticipants.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+		const ManualEventRegistrationFunction = new EnhancedLambda(
+			this,
+			"manualEventRegistration",
+			{
+				lambdaDefinition: "manualEventRegistration",
+				entry: "./stateless/functions/manualEventRegistration.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
 
 		const userPool = new UserPool(this, "UserPool", {
 			userPoolName: "testing-entra-dev",
@@ -239,16 +280,45 @@ export class StatelessStack extends Stack {
 								integration: ListS3ObjectFunction.integration,
 								authorizer: cognitoAuth,
 							},
+							{
+								methods: [HttpMethod.POST],
+								path: "/event-registration",
+								integration: EventRegistrationFunction.integration,
+							},
+							{
+								methods: [HttpMethod.GET],
+								path: "/event-participants/{eventSlug}",
+								integration: GetEventParticipantsFunction.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.POST],
+								path: "/manual-event-registration",
+								integration: ManualEventRegistrationFunction.integration,
+								authorizer: cognitoAuth,
+							},
 						],
 					},
 				],
 			},
 		);
+
+		//? Table Write
 		this.table.grantWriteData(CreateEventFunction.function);
 		this.table.grantWriteData(DeleteEventFunction.function);
+		this.table.grantWriteData(EventRegistrationFunction.function);
+		this.table.grantWriteData(ManualEventRegistrationFunction.function);
+
+		//? Table Read
 		this.table.grantReadData(GetEventListFunction.function);
 		this.table.grantReadData(GetEventDetailsFunction.function);
+		this.table.grantReadData(GetEventParticipantsFunction.function);
+
+		//? Bucket Write
 		this.bucket.grantWrite(PutS3ObjectFunction.function);
+		this.bucket.grantWrite(EventRegistrationFunction.function);
+
+		//? Bucket Read
 		this.bucket.grantRead(ListS3ObjectFunction.function);
 	}
 }

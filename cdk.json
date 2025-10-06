@@ -1,5 +1,5 @@
 {
-	"app": "npx ts-node --esm --experimentalSpecifierResolution node --prefer-ts-exts bin/symphony.ts",
+	"app": "npx tsx bin/symphony.ts",
 	"watch": {
 		"include": ["**"],
 		"exclude": [

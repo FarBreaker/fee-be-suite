@@ -1,8 +1,8 @@
 /** @format */
 
-import "source-map-support/register";
+import "source-map-support/register.js";
 import { App, Aspects, Tags } from "aws-cdk-lib";
-import { LambdaRule } from "../lib/aspects/LambdaRule";
+import { LambdaRule } from "../lib/Aspects/LambdaRule";
 import { loadConfig } from "../lib/configs/config-loader";
 import { getTags } from "../lib/constants/tags";
 import { StatefulStack } from "../stateful/stateful-stack";

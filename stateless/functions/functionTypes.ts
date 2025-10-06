@@ -36,3 +36,13 @@ export interface EventReferee {
 export interface DeleteEventInput {
 	sk: string;
 }
+
+export interface EventRegistrationDTO {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	eventSlug: string;
+	eventType: string;
+	paymentScreenshot?: string; // This will be the file data (base64 or buffer)
+}
