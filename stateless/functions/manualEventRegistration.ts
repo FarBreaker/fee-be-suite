@@ -14,7 +14,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(
 export const handler = async (
 	event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-	console.log("Event: ", event);
+	console.log("Event: ", event.requestContext.authorizer);
 	
 	try {
 		let formData: Record<string, string>;
@@ -71,7 +71,7 @@ export const handler = async (
 			registrationDate: new Date().toISOString(),
             attendanceStatus: "VERIFIED",
 			registrationType: "manual", // Field to identify manual registration
-			registeredBy: event.requestContext?.authorizer?.jwt?.claims?.email || "admin", // Who registered this participant
+			registeredBy: event.requestContext?.authorizer?.jwt?.claims?.username || "admin", // Who registered this participant
 		};
 
 		await ddbDocClient.send(
