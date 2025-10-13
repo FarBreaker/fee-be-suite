@@ -180,6 +180,30 @@ export class StatelessStack extends Stack {
 				handler: "handler",
 			},
 		);
+		const UploadQuizToS3Function = new EnhancedLambda(this, "uploadQuizToS3", {
+			lambdaDefinition: "uploadQuizToS3",
+			entry: "./stateless/functions/uploadQuizToS3.ts",
+			profile: LambdaProfile.PERFORMANCE,
+			timeout: Duration.minutes(3),
+			httpIntegration: true,
+			environment: {
+				BUCKET_NAME: this.bucket.bucketName,
+				REGION: props.env.region ?? "eu-central-1",
+			},
+			handler: "handler",
+		});
+		const GetQuizFromS3Function = new EnhancedLambda(this, "getQuizFromS3", {
+			lambdaDefinition: "getQuizFromS3",
+			entry: "./stateless/functions/getQuizFromS3.ts",
+			profile: LambdaProfile.COMPATIBILITY,
+			timeout: Duration.minutes(3),
+			httpIntegration: true,
+			environment: {
+				BUCKET_NAME: this.bucket.bucketName,
+				REGION: props.env.region ?? "eu-central-1",
+			},
+			handler: "handler",
+		});
 
 		const userPool = new UserPool(this, "UserPool", {
 			userPoolName: "testing-entra-dev",
@@ -297,6 +321,17 @@ export class StatelessStack extends Stack {
 								integration: ManualEventRegistrationFunction.integration,
 								authorizer: cognitoAuth,
 							},
+							{
+								methods: [HttpMethod.POST],
+								path: "/quiz/upload",
+								integration: UploadQuizToS3Function.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.GET],
+								path: "/quiz/{eventId}",
+								integration: GetQuizFromS3Function.integration,
+							},
 						],
 					},
 				],
@@ -317,8 +352,10 @@ export class StatelessStack extends Stack {
 		//? Bucket Write
 		this.bucket.grantWrite(PutS3ObjectFunction.function);
 		this.bucket.grantWrite(EventRegistrationFunction.function);
+		this.bucket.grantWrite(UploadQuizToS3Function.function);
 
 		//? Bucket Read
 		this.bucket.grantRead(ListS3ObjectFunction.function);
+		this.bucket.grantRead(GetQuizFromS3Function.function);
 	}
 }

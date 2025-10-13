@@ -46,3 +46,46 @@ export interface EventRegistrationDTO {
 	eventType: string;
 	paymentScreenshot?: string; // This will be the file data (base64 or buffer)
 }
+
+export interface QuizAnswer {
+	id: string;
+	text: string;
+	isCorrect: boolean;
+}
+
+export interface QuizQuestion {
+	id: string;
+	question: string;
+	answers: QuizAnswer[];
+}
+
+export interface Quiz {
+	id: string;
+	title: string;
+	questions: QuizQuestion[];
+	createdAt: string;
+	updatedAt: string;
+	eventId: string;
+	eventTitle: string;
+}
+
+export interface QuizMetadata {
+	questionCount: number;
+	totalAnswers: number;
+	averageAnswersPerQuestion: number;
+	hasEventAssociation: boolean;
+	uploadTimestamp: string;
+	fileSize: number;
+}
+
+export interface UploadQuizInput {
+	quiz: Quiz;
+	metadata: QuizMetadata;
+}
+
+export interface UploadQuizResponse {
+	status: string;
+	message: string;
+	key: string;
+	eventId: string;
+}

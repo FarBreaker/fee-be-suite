@@ -42,9 +42,7 @@ export const handler = async (
 
 		return {
 			statusCode: 200,
-			body: JSON.stringify({
-				status: "OK",
-			}),
+			body: JSON.stringify(Item),
 		};
 	} catch (error) {
 		console.error("Error: ", error);
