@@ -1,7 +1,7 @@
 import { type PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import Busboy, { FileInfo } from "busboy";
+import Busboy from "busboy";
 import { fileTypeFromBuffer } from "file-type";
 
 const BucketName = process.env.BUCKET_NAME;

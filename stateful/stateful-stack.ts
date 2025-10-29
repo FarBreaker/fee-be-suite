@@ -10,7 +10,7 @@ import {
 	OriginBase,
 } from "aws-cdk-lib/aws-cloudfront";
 import { S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { AttributeType, TableV2 } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, TableV2, StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { Bucket, type CorsRule, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { NagSuppressions } from "cdk-nag";
 import type { Construct } from "constructs";
@@ -77,6 +77,7 @@ export class StatefulStack extends Stack {
 			{
 				partitionKey: { name: "pk", type: AttributeType.STRING },
 				sortKey: { name: "sk", type: AttributeType.STRING },
+				dynamoStream: StreamViewType.NEW_AND_OLD_IMAGES, // Enable streams for attendee counter updates
 				...table,
 			},
 		);
@@ -85,6 +86,11 @@ export class StatefulStack extends Stack {
 			value: this.Table.tableName,
 			description: "The name of the dynamo table",
 			exportName: `${props.prefix}-TableName-${props?.env.stage}`,
+		});
+		new CfnOutput(this, "TableStreamArn", {
+			value: this.Table.tableStreamArn || "",
+			description: "The ARN of the dynamo table stream",
+			exportName: `${props.prefix}-TableStreamArn-${props?.env.stage}`,
 		});
 		new CfnOutput(this, "BucketName", {
 			value: this.Bucket.bucketName,

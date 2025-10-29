@@ -1,6 +1,6 @@
 /** @format */
 
-import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { Duration, RemovalPolicy, Stack, CfnOutput } from "aws-cdk-lib";
 import { HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import {
@@ -16,7 +16,11 @@ import {
 } from "aws-cdk-lib/aws-cognito";
 
 import { type ITableV2, TableV2 } from "aws-cdk-lib/aws-dynamodb";
+
+import { CfnEventSourceMapping } from "aws-cdk-lib/aws-lambda";
+import { Fn } from "aws-cdk-lib";
 import { Bucket, type IBucket } from "aws-cdk-lib/aws-s3";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import type { Construct } from "constructs";
 import type { EnvironmentConfig } from "../lib/configs/config-loader";
 import { Gateway } from "../lib/constructs/Gateway";
@@ -58,42 +62,12 @@ export class StatelessStack extends Stack {
 				handler: "handler",
 			},
 		);
-		const GetEventListFunction = new EnhancedLambda(
-			this,
-			`${props?.prefix}-getEventList-${props.env.stage}`,
-			{
-				lambdaDefinition: `${props?.prefix}-getEventList-${props.env.stage}`,
-				entry: "./stateless/functions/getEventList.ts",
-				profile: compute.lambda.profile,
-				timeout: Duration.minutes(3),
-				httpIntegration: true,
-				environment: {
-					TABLE_NAME: this.table.tableName,
-				},
-				handler: "handler",
-			},
-		);
 		const DeleteEventFunction = new EnhancedLambda(
 			this,
 			`${props?.prefix}-deleteEvent-${props.env.stage}`,
 			{
 				lambdaDefinition: `${props?.prefix}-deleteEvent-${props.env.stage}`,
 				entry: "./stateless/functions/deleteEvents.ts",
-				profile: compute.lambda.profile,
-				timeout: Duration.minutes(3),
-				httpIntegration: true,
-				environment: {
-					TABLE_NAME: this.table.tableName,
-				},
-				handler: "handler",
-			},
-		);
-		const GetEventDetailsFunction = new EnhancedLambda(
-			this,
-			`${props?.prefix}-getEventDetails-${props.env.stage}`,
-			{
-				lambdaDefinition: `${props?.prefix}-getEventDetails-${props.env.stage}`,
-				entry: "./stateless/functions/getEventDetails.ts",
 				profile: compute.lambda.profile,
 				timeout: Duration.minutes(3),
 				httpIntegration: true,
@@ -148,12 +122,12 @@ export class StatelessStack extends Stack {
 				handler: "handler",
 			},
 		);
-		const GetEventParticipantsFunction = new EnhancedLambda(
+		const GetEventAttendeesFunction = new EnhancedLambda(
 			this,
-			"getEventParticipants",
+			"getEventAttendees",
 			{
-				lambdaDefinition: "getEventParticipants",
-				entry: "./stateless/functions/getEventParticipants.ts",
+				lambdaDefinition: "getEventAttendees",
+				entry: "./stateless/functions/getEventAttendees.ts",
 				profile: LambdaProfile.PERFORMANCE,
 				timeout: Duration.minutes(3),
 				httpIntegration: true,
@@ -164,12 +138,12 @@ export class StatelessStack extends Stack {
 				handler: "handler",
 			},
 		);
-		const ManualEventRegistrationFunction = new EnhancedLambda(
+		const ManualAttendeeRegistrationFunction = new EnhancedLambda(
 			this,
-			"manualEventRegistration",
+			"manualAttendeeRegistration",
 			{
-				lambdaDefinition: "manualEventRegistration",
-				entry: "./stateless/functions/manualEventRegistration.ts",
+				lambdaDefinition: "manualAttendeeRegistration",
+				entry: "./stateless/functions/manualAttendeeRegistration.ts",
 				profile: LambdaProfile.PERFORMANCE,
 				timeout: Duration.minutes(3),
 				httpIntegration: true,
@@ -200,6 +174,62 @@ export class StatelessStack extends Stack {
 			httpIntegration: true,
 			environment: {
 				BUCKET_NAME: this.bucket.bucketName,
+				REGION: props.env.region ?? "eu-central-1",
+			},
+			handler: "handler",
+		});
+		const DeleteAttendeeFunction = new EnhancedLambda(this, "deleteAttendee", {
+			lambdaDefinition: "deleteAttendee",
+			entry: "./stateless/functions/deleteAttendee.ts",
+			profile: LambdaProfile.PERFORMANCE,
+			timeout: Duration.minutes(3),
+			httpIntegration: true,
+			environment: {
+				TABLE_NAME: this.table.tableName,
+				REGION: props.env.region ?? "eu-central-1",
+			},
+			handler: "handler",
+		});
+		const UpdateAttendeeDetailsFunction = new EnhancedLambda(
+			this,
+			"updateAttendeeDetails",
+			{
+				lambdaDefinition: "updateAttendeeDetails",
+				entry: "./stateless/functions/updateAttendeeDetails.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+		const UpdateAttendeeStatusFunction = new EnhancedLambda(
+			this,
+			"updateAttendeeStatus",
+			{
+				lambdaDefinition: "updateAttendeeStatus",
+				entry: "./stateless/functions/updateAttendeeStatus.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.minutes(3),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+		const UpdateEventFunction = new EnhancedLambda(this, "updateEvent", {
+			lambdaDefinition: "updateEvent",
+			entry: "./stateless/functions/updateEvent.ts",
+			profile: LambdaProfile.PERFORMANCE,
+			timeout: Duration.minutes(3),
+			httpIntegration: true,
+			environment: {
+				TABLE_NAME: this.table.tableName,
 				REGION: props.env.region ?? "eu-central-1",
 			},
 			handler: "handler",
@@ -261,6 +291,71 @@ export class StatelessStack extends Stack {
 			},
 		);
 
+		// Optimized Lambda functions for better performance
+		const GetEventListOptimizedFunction = new EnhancedLambda(
+			this,
+			"getEventListOptimized",
+			{
+				lambdaDefinition: "getEventListOptimized",
+				entry: "./stateless/functions/getEventListOptimized.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.seconds(10),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+		const GetEventDetailsOptimizedFunction = new EnhancedLambda(
+			this,
+			"getEventDetailsOptimized",
+			{
+				lambdaDefinition: "getEventDetailsOptimized",
+				entry: "./stateless/functions/getEventDetailsOptimized.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.seconds(10),
+				httpIntegration: true,
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+		const UpdateAttendeeCounterFunction = new EnhancedLambda(
+			this,
+			"updateAttendeeCounter",
+			{
+				lambdaDefinition: "updateAttendeeCounter",
+				entry: "./stateless/functions/updateAttendeeCounter.ts",
+				profile: LambdaProfile.PERFORMANCE,
+				timeout: Duration.minutes(1),
+				httpIntegration: false, // This is a stream handler, not HTTP
+				environment: {
+					TABLE_NAME: this.table.tableName,
+					REGION: props.env.region ?? "eu-central-1",
+				},
+				handler: "handler",
+			},
+		);
+
+		// Configure DynamoDB Stream trigger using imported stream ARN
+		const tableStreamArn = Fn.importValue(
+			`${props.prefix}-TableStreamArn-${props?.env.stage}`,
+		);
+
+		// Create event source mapping directly using CloudFormation
+		new CfnEventSourceMapping(this, "AttendeeCounterEventSourceMapping", {
+			eventSourceArn: tableStreamArn,
+			functionName: UpdateAttendeeCounterFunction.function.functionName,
+			startingPosition: "LATEST",
+			batchSize: 10,
+			maximumBatchingWindowInSeconds: 5,
+			maximumRetryAttempts: 3,
+		});
+
 		const httpEndpoint = new Gateway(
 			this,
 			`${props.prefix}-gateway-${props.env.stage}`,
@@ -270,66 +365,97 @@ export class StatelessStack extends Stack {
 					{
 						apiVersion: "v1",
 						routes: [
+							// Events Resource
 							{
 								methods: [HttpMethod.GET],
-								path: "/getEventDetails/{eventType}/{eventId}",
-								integration: GetEventDetailsFunction.integration,
+								path: "/events",
+								integration: GetEventListOptimizedFunction.integration,
 							},
 							{
 								methods: [HttpMethod.GET],
-								path: "/getEventList/{eventType}",
-								integration: GetEventListFunction.integration,
+								path: "/events/{eventType}/{eventSlug}",
+								integration: GetEventDetailsOptimizedFunction.integration,
 							},
 							{
 								methods: [HttpMethod.POST],
-								path: "/createEvent/{eventType}",
+								path: "/events/{eventType}",
 								integration: CreateEventFunction.integration,
 								authorizer: cognitoAuth,
 							},
 							{
-								methods: [HttpMethod.POST],
-								path: "/deleteEvent/{eventType}",
+								methods: [HttpMethod.DELETE],
+								path: "/events/{eventType}/{eventSlug}",
 								integration: DeleteEventFunction.integration,
 								authorizer: cognitoAuth,
 							},
 							{
 								methods: [HttpMethod.PUT],
-								path: "/uploadFile",
+								path: "/events/{eventType}/{eventSlug}",
+								integration: UpdateEventFunction.integration,
+								authorizer: cognitoAuth,
+							},
+
+							// Event Attendees Resource (nested under events)
+							{
+								methods: [HttpMethod.GET],
+								path: "/events/{eventSlug}/attendees",
+								integration: GetEventAttendeesFunction.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.POST],
+								path: "/events/{eventSlug}/attendees",
+								integration: ManualAttendeeRegistrationFunction.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.POST],
+								path: "/events/{eventSlug}/attendees/register",
+								integration: EventRegistrationFunction.integration,
+							},
+							{
+								methods: [HttpMethod.DELETE],
+								path: "/events/{eventSlug}/attendees/{attendeeId}",
+								integration: DeleteAttendeeFunction.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.PUT],
+								path: "/events/{eventSlug}/attendees/{attendeeId}",
+								integration: UpdateAttendeeDetailsFunction.integration,
+								authorizer: cognitoAuth,
+							},
+							{
+								methods: [HttpMethod.PATCH],
+								path: "/events/{eventSlug}/attendees/{attendeeId}/verify",
+								integration: UpdateAttendeeStatusFunction.integration,
+								authorizer: cognitoAuth,
+							},
+
+							// Files Resource
+							{
+								methods: [HttpMethod.POST],
+								path: "/files",
 								integration: PutS3ObjectFunction.integration,
 								authorizer: cognitoAuth,
 							},
 							{
 								methods: [HttpMethod.GET],
-								path: "/listFiles",
+								path: "/files",
 								integration: ListS3ObjectFunction.integration,
 								authorizer: cognitoAuth,
 							},
+
+							// Quiz Resource (standalone)
 							{
 								methods: [HttpMethod.POST],
-								path: "/event-registration",
-								integration: EventRegistrationFunction.integration,
-							},
-							{
-								methods: [HttpMethod.GET],
-								path: "/event-participants/{eventSlug}",
-								integration: GetEventParticipantsFunction.integration,
-								authorizer: cognitoAuth,
-							},
-							{
-								methods: [HttpMethod.POST],
-								path: "/manual-event-registration",
-								integration: ManualEventRegistrationFunction.integration,
-								authorizer: cognitoAuth,
-							},
-							{
-								methods: [HttpMethod.POST],
-								path: "/quiz/upload",
+								path: "/quiz/{eventSlug}",
 								integration: UploadQuizToS3Function.integration,
 								authorizer: cognitoAuth,
 							},
 							{
 								methods: [HttpMethod.GET],
-								path: "/quiz/{eventId}",
+								path: "/quiz/{eventSlug}",
 								integration: GetQuizFromS3Function.integration,
 							},
 						],
@@ -342,12 +468,35 @@ export class StatelessStack extends Stack {
 		this.table.grantWriteData(CreateEventFunction.function);
 		this.table.grantWriteData(DeleteEventFunction.function);
 		this.table.grantWriteData(EventRegistrationFunction.function);
-		this.table.grantWriteData(ManualEventRegistrationFunction.function);
+		this.table.grantWriteData(ManualAttendeeRegistrationFunction.function);
+		this.table.grantWriteData(DeleteAttendeeFunction.function);
+		this.table.grantWriteData(UpdateAttendeeDetailsFunction.function);
+		this.table.grantWriteData(UpdateAttendeeStatusFunction.function);
+		this.table.grantWriteData(UpdateEventFunction.function);
+		this.table.grantWriteData(UpdateAttendeeCounterFunction.function); // Stream handler needs write access
 
 		//? Table Read
-		this.table.grantReadData(GetEventListFunction.function);
-		this.table.grantReadData(GetEventDetailsFunction.function);
-		this.table.grantReadData(GetEventParticipantsFunction.function);
+		this.table.grantReadData(GetEventListOptimizedFunction.function);
+		this.table.grantReadData(GetEventDetailsOptimizedFunction.function);
+		this.table.grantReadData(GetEventAttendeesFunction.function);
+		this.table.grantReadData(DeleteAttendeeFunction.function);
+		this.table.grantReadData(UpdateAttendeeDetailsFunction.function);
+		this.table.grantReadData(UpdateAttendeeStatusFunction.function);
+		this.table.grantReadData(UpdateEventFunction.function);
+		this.table.grantReadData(UpdateAttendeeCounterFunction.function); // Stream handler needs read access
+
+		//? DynamoDB Stream - Grant stream read permissions using IAM policy
+		UpdateAttendeeCounterFunction.function.addToRolePolicy(
+			new PolicyStatement({
+				actions: [
+					"dynamodb:DescribeStream",
+					"dynamodb:GetRecords",
+					"dynamodb:GetShardIterator",
+					"dynamodb:ListStreams",
+				],
+				resources: [tableStreamArn],
+			}),
+		);
 
 		//? Bucket Write
 		this.bucket.grantWrite(PutS3ObjectFunction.function);

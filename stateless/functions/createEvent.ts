@@ -26,11 +26,36 @@ export const handler = async (
 			};
 		}
 
+		const eventType = event.pathParameters?.eventType;
+		
+		if (!eventType) {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({ 
+					status: "Error", 
+					message: "Missing eventType path parameter" 
+				}),
+			};
+		}
+
+		// Map the eventType to the correct partition key
+		const partitionKey = eventType.toUpperCase(); // Convert to uppercase (FAD or EVENT)
+		
+		if (partitionKey !== "FAD" && partitionKey !== "EVENT") {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({ 
+					status: "Error", 
+					message: "Invalid eventType parameter. Must be 'fad' or 'event'" 
+				}),
+			};
+		}
+
 		const Item = {
 			...input,
-			pk: event.pathParameters?.eventType,
+			pk: partitionKey,
 			sk: `${input.slug}#${input.creationDate}`,
-			eventType: event.pathParameters?.eventType,
+			eventType: partitionKey,
 		};
 
 		await ddbDocClient.send(

@@ -11,26 +11,25 @@ export const handler = async (
 	const client = new S3Client({ region });
 
 	try {
+		// Get eventSlug from path parameter (RESTful: POST /quiz/{eventSlug})
+		const eventSlug = event.pathParameters?.eventSlug;
+		
+		if (!eventSlug) {
+			throw new Error("Missing eventSlug path parameter");
+		}
+
 		if (!event.body) {
 			throw new Error("Request body is required");
 		}
 
 		const input: UploadQuizInput = JSON.parse(event.body);
 		
-		if (!input.quiz || !input.quiz.eventId) {
-			throw new Error("Quiz object with eventId is required");
+		if (!input.quiz) {
+			throw new Error("Quiz object is required");
 		}
 
-		// Extract the eventId and trim at the # symbol
-		const eventIdParts = input.quiz.eventId.split('#');
-		const trimmedEventId = eventIdParts[0];
-
-		if (!trimmedEventId) {
-			throw new Error("Invalid eventId format");
-		}
-
-		// Create the S3 key: eventId/quiz.json
-		const key = `${trimmedEventId}/quiz.json`;
+		// Use eventSlug from path parameter
+		const key = `${eventSlug}/quiz.json`;
 
 		// Convert the input to JSON string
 		const jsonContent = JSON.stringify(input, null, 2);
@@ -50,7 +49,7 @@ export const handler = async (
 			status: "OK",
 			message: "Quiz uploaded successfully",
 			key: key,
-			eventId: trimmedEventId,
+			eventSlug: eventSlug,
 		};
 
 		return {

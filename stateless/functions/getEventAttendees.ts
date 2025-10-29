@@ -15,53 +15,55 @@ export const handler = async (
 	event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
 	console.log("Event: ", event);
-	
+
 	try {
 		const eventSlug = event.pathParameters?.eventSlug;
-		
+
 		if (!eventSlug) {
 			return {
 				statusCode: 400,
-				body: JSON.stringify({ 
-					status: "Error", 
-					message: "Missing eventSlug path parameter" 
+				body: JSON.stringify({
+					status: "Error",
+					message: "Missing eventSlug path parameter",
 				}),
 			};
 		}
 
-		// Query all participants for the event
+		// Query all attendees for the event
 		const queryParams = {
 			TableName,
 			KeyConditionExpression: "pk = :pk",
 			ExpressionAttributeValues: {
-				":pk": `${eventSlug}#PARTICIPANT`,
+				":pk": `${eventSlug}#ATTENDEE`,
 			},
 		};
 
 		const result = await ddbDocClient.send(new QueryCommand(queryParams));
-		
+
 		// Transform the data to remove DynamoDB keys and format for response
-		const participants = result.Items?.map(item => ({
-			firstName: item.firstName,
-			lastName: item.lastName,
-			email: item.email,
-			phone: item.phone,
-			eventSlug: item.eventSlug,
-			eventType: item.eventType,
-			paymentScreenshotKey: item.paymentScreenshotKey,
-            attendanceStatus: item.attendanceStatus,
-			registrationDate: item.registrationDate,
-			registrationType: item.registrationType || "self-service", // Default for backward compatibility
-			registeredBy: item.registeredBy,
-		})) || [];
+		const attendees =
+			result.Items?.map((item) => ({
+				firstName: item.firstName,
+				lastName: item.lastName,
+				email: item.email,
+				phone: item.phone,
+				eventSlug: item.eventSlug,
+				eventType: item.eventType,
+				paymentScreenshotKey: item.paymentScreenshotKey,
+				attendanceStatus: item.attendanceStatus,
+				profession: item.profession,
+				registrationDate: item.registrationDate,
+				registrationType: item.registrationType || "self-service", // Default for backward compatibility
+				registeredBy: item.registeredBy,
+			})) || [];
 
 		return {
 			statusCode: 200,
 			body: JSON.stringify({
 				status: "OK",
 				eventSlug,
-				participantCount: participants.length,
-				participants,
+				attendeeCount: attendees.length,
+				attendees,
 			}),
 		};
 	} catch (error) {
@@ -69,9 +71,10 @@ export const handler = async (
 
 		return {
 			statusCode: 500,
-			body: JSON.stringify({ 
-				status: "Error", 
-				message: error instanceof Error ? error.message : "Internal server error" 
+			body: JSON.stringify({
+				status: "Error",
+				message:
+					error instanceof Error ? error.message : "Internal server error",
 			}),
 		};
 	}

@@ -3,7 +3,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import type { DeleteEventInput } from "./functionTypes";
+
 
 const TableName = process.env.TABLE_NAME;
 const ddbDocClient = DynamoDBDocumentClient.from(
@@ -15,20 +15,46 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
 	console.log("Event: ", event);
 	try {
-		let input: DeleteEventInput;
-		try {
-			input = JSON.parse(event.body ?? "");
-		} catch (error) {
-			console.error("Error parsing JSON: ", error);
+		// Get eventType and eventSlug from path parameters (RESTful: DELETE /events/{eventType}/{eventSlug})
+		const eventType = event.pathParameters?.eventType;
+		const eventSlug = event.pathParameters?.eventSlug;
+
+		if (!eventType) {
 			return {
 				statusCode: 400,
-				body: JSON.stringify({ status: "Error", message: "Invalid JSON" }),
+				body: JSON.stringify({ 
+					status: "Error", 
+					message: "Missing eventType path parameter" 
+				}),
+			};
+		}
+
+		if (!eventSlug) {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({ 
+					status: "Error", 
+					message: "Missing eventSlug path parameter" 
+				}),
+			};
+		}
+
+		// Map the eventType to the correct partition key
+		const partitionKey = eventType.toUpperCase(); // Convert to uppercase (FAD or EVENT)
+		
+		if (partitionKey !== "FAD" && partitionKey !== "EVENT") {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({ 
+					status: "Error", 
+					message: "Invalid eventType parameter. Must be 'fad' or 'event'" 
+				}),
 			};
 		}
 
 		const Item = {
-			pk: event.pathParameters?.eventType,
-			sk: input.sk,
+			pk: partitionKey,
+			sk: eventSlug,
 		};
 
 		await ddbDocClient.send(

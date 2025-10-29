@@ -11,15 +11,15 @@ export const handler = async (
 	const client = new S3Client({ region });
 
 	try {
-		// Get eventId from path parameters
-		const eventId = event.pathParameters?.eventId;
+		// Get eventSlug from path parameters (RESTful: GET /quiz/{eventSlug})
+		const eventSlug = event.pathParameters?.eventSlug;
 		
-		if (!eventId) {
-			throw new Error("EventId is required in path parameters");
+		if (!eventSlug) {
+			throw new Error("EventSlug is required in path parameters");
 		}
 
-		// Create the S3 key: eventId/quiz.json
-		const key = `${eventId}/quiz.json`;
+		// Create the S3 key: eventSlug/quiz.json
+		const key = `${eventSlug}/quiz.json`;
 
 		// Get object from S3
 		const getCommand = new GetObjectCommand({

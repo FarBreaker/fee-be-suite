@@ -1,0 +1,16 @@
+Route ID;HTTP Method;Path;Function Name;Integration;Auth Required;Resource Category;Description;Path Parameters;Query Parameters;Notes
+1;GET;/events;GetEventListOptimizedFunction;GetEventListOptimizedFunction.integration;No;Events;List events with query filter;None;type (required);Uses query parameter for event type filtering
+2;GET;/events/{eventType}/{eventSlug};GetEventDetailsOptimizedFunction;GetEventDetailsOptimizedFunction.integration;No;Events;Get specific event details;eventType eventSlug;None;Retrieves details for a specific event
+3;POST;/events/{eventType};CreateEventFunction;CreateEventFunction.integration;Yes;Events;Create new event;eventType;None;Creates a new event of specified type
+4;DELETE;/events/{eventType}/{eventSlug};DeleteEventFunction;DeleteEventFunction.integration;Yes;Events;Delete specific event;eventType eventSlug;None;Deletes a specific event
+5;GET;/events/{eventSlug}/attendees;GetEventAttendeesFunction;GetEventAttendeesFunction.integration;Yes;Attendees;List event attendees;eventSlug;None;Lists all attendees for an event
+6;POST;/events/{eventSlug}/attendees;ManualAttendeeRegistrationFunction;ManualAttendeeRegistrationFunction.integration;Yes;Attendees;Manual attendee registration;eventSlug;None;Manually register an attendee
+7;POST;/events/{eventSlug}/attendees/register;EventRegistrationFunction;EventRegistrationFunction.integration;No;Attendees;Self-service registration;eventSlug;None;Self-service attendee registration with file upload
+8;DELETE;/events/{eventSlug}/attendees/{attendeeId};DeleteAttendeeFunction;DeleteAttendeeFunction.integration;Yes;Attendees;Remove attendee;eventSlug attendeeId;None;Removes an attendee from an event
+9;POST;/files;PutS3ObjectFunction;PutS3ObjectFunction.integration;Yes;Files;Upload file;None;None;Upload a file to S3 storage
+10;GET;/files;ListS3ObjectFunction;ListS3ObjectFunction.integration;Yes;Files;List files;None;None;List all uploaded files
+11;POST;/quiz/{eventSlug};UploadQuizToS3Function;UploadQuizToS3Function.integration;Yes;Quiz;Upload quiz;eventSlug;None;Upload quiz for an event
+12;GET;/quiz/{eventSlug};GetQuizFromS3Function;GetQuizFromS3Function.integration;No;Quiz;Get quiz;eventSlug;None;Retrieve quiz for an event
+13;PUT;/events/{eventSlug}/attendees/{attendeeId};UpdateAttendeeDetailsFunction;UpdateAttendeeDetailsFunction.integration;Yes;Attendees;Update attendee details;eventSlug attendeeId;None;Update attendee details while preserving status
+14;PATCH;/events/{eventSlug}/attendees/{attendeeId}/verify;UpdateAttendeeStatusFunction;UpdateAttendeeStatusFunction.integration;Yes;Attendees;Verify attendee;eventSlug attendeeId;None;Update attendee status to VERIFIED
+15;PUT;/events/{eventType}/{eventSlug};UpdateEventFunction;UpdateEventFunction.integration;Yes;Events;Update event details;eventType eventSlug;None;Update event details with audit trail

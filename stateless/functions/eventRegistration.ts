@@ -52,8 +52,24 @@ export const handler = async (
 
         const { formData, fileData } = parsed;
 
-        // Validate required fields
-        const requiredFields = ['firstName', 'lastName', 'email',  'eventSlug', 'eventType'];
+        // Get eventSlug from path parameter (RESTful: POST /events/{eventSlug}/attendees/register)
+        const eventSlug = event.pathParameters?.eventSlug;
+        
+        if (!eventSlug) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    status: "Error",
+                    message: "Missing eventSlug path parameter"
+                }),
+            };
+        }
+
+        // Add eventSlug to formData for backward compatibility
+        formData.eventSlug = eventSlug;
+
+        // Validate required fields (eventSlug now comes from path, not form)
+        const requiredFields = ['firstName', 'lastName', 'email', 'eventType'];
         for (const field of requiredFields) {
             if (!formData[field]) {
                 return {
@@ -101,9 +117,9 @@ export const handler = async (
             console.log(`Payment screenshot uploaded to S3: ${key}`);
         }
 
-        // Save participant data to DynamoDB
-        const participantItem = {
-            pk: `${formData.eventSlug}#PARTICIPANT`,
+        // Save attendee data to DynamoDB
+        const attendeeItem = {
+            pk: `${formData.eventSlug}#ATTENDEE`,
             sk: formData.email,
             firstName: formData.firstName,
             lastName: formData.lastName,
@@ -120,7 +136,7 @@ export const handler = async (
         await ddbDocClient.send(
             new PutCommand({
                 TableName,
-                Item: participantItem,
+                Item: attendeeItem,
             }),
         );
 
@@ -130,7 +146,7 @@ export const handler = async (
                 status: "OK",
                 message: "Registration successful",
                 paymentScreenshotKey,
-                participantId: formData.email,
+                attendeeId: formData.email,
                 registrationType: "self-service",
             }),
         };

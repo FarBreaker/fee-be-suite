@@ -87,5 +87,5 @@ export interface UploadQuizResponse {
 	status: string;
 	message: string;
 	key: string;
-	eventId: string;
+	eventSlug: string;
 }
